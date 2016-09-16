@@ -20,7 +20,11 @@ import re
 
 
 form = """
-
+<head>
+    <style>
+        .error{color:red}
+    </style>
+</head>
 
     <form action="" method="post">
         <table>
@@ -40,7 +44,7 @@ form = """
                 <tr>
                 <td><label>Password</label></td>
                 <td>
-                        <input name="password" type="text" value="" required>
+                        <input name="password" type="password" value="" required>
                             <span class="error">%(error_password)s</span>
                 </td>
             </tr>
@@ -58,7 +62,7 @@ form = """
             <tr>
                 <td><label>Email</label></td>
                 <td>
-                        <input name="email" type="text" value="%(email)s">
+                        <input name="email" type="email" pattern= "[^ @]*@[^ @]*" value="%(email)s">
                             <span class="error">%(error_email)s</span>
                 </td>
             </tr>
@@ -78,11 +82,9 @@ PASS_RE = re.compile(r"^.{3,20}$")
 def valid_password(password):
     return password and PASS_RE.match(password)
 
-EMAIL_RE = re.compile(r"^[\S] + @[\S] + \.[\S] + $")
+EMAIL_RE = re.compile(r"^[\S]+@[\S]+.[\S]$")
 def valid_email(email):
-
-    return not email and EMAIL_RE.match(email)
-
+        return email and EMAIL_RE.match(email)
 
 
 class MainHandler(webapp2.RequestHandler):
@@ -109,14 +111,24 @@ class MainHandler(webapp2.RequestHandler):
                 params['error_verify'] = "Your passwords did not match"
                 has_error = True
 
-        if not valid_email(email):
+        if email != "" and not valid_email(email):
             params['error_email'] = "That is not a valid email"
             has_error = True
 
         if has_error:
             self.response.out.write(form % params)
+        else:
+            self.redirect("/welcome?username=%s" %username)
+
+
+class WelcomeHandler(webapp2.RequestHandler):
+    """docstring for welcome."""
+    def get(self):
+        username = self.request.get('username')
+        self.response.out.write("Welcome " + username + "!")
 
 
 app = webapp2.WSGIApplication([
-    ('/', MainHandler)
+    ('/', MainHandler),
+    ('/welcome', WelcomeHandler)
 ], debug=True)
